@@ -1,0 +1,90 @@
+---
+title: "Analysis.Rmd"
+author: "Igor Serafini"
+date: "2023-02-15"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+#Analysis
+
+importing Sequences.csv
+```{r}
+Sequences <- read.csv("Sequences.csv")
+```
+
+```{r}
+View(Sequences)
+```
+
+Counting the number of each base pair 
+```{r}
+nucleotides <- c("G", "A", "T", "C") #Defining nucleotides
+Nuc_count <- numeric(0) #Setting up object
+
+for (i in seq_along(nucleotides)) {
+  Nuc_count <- append(Nuc_count, nchar(gsub(sprintf("[^%s]", nucleotides[i]), "", Sequences$Sequence)))
+}
+
+```
+
+Printing out number of each nucleotide as a table: 
+```{r}
+dim(Nuc_count) <- c(3,4) 
+colnames(Nuc_count)<- c("G", "A", "T", "C") 
+rownames(Nuc_count)<- c("HQ433692.1 ","HQ433694.1 ","HQ433691.1")
+
+#Table created, x and y axis are correctly positioned 
+Nuc_count <- as.data.frame(Nuc_count)
+```
+
+Inlcuding picture and link to Borrelia Burgdoferi
+
+Image
+```{r}
+library(htmltools)
+
+Borrelia_Burgdoferi <- "https://upload.wikimedia.org/wikipedia/commons/3/34/Adult_deer_tick.jpg"    
+
+# Saving the image to a file
+download.file(Borrelia_Burgdoferi, "my_image.jpg", mode = "wb")
+
+# Loading the image file using the 'readJPEG' function
+knitr::include_graphics("my_image.jpg")
+
+```
+Link to the Wikipedia page about Borrelia Burgdoferi
+```{r}
+Link <- "https://en.wikipedia.org/wiki/Lyme_disease"
+Link
+```
+Calculating GC content (% of nucleotides)
+```{r}
+GC_count <-  Nuc_count  %>% 
+  select(G, C) 
+  
+GC <- rowSums(GC_count) #Count of GC at each sequence 
+
+All <- rowSums(Nuc_count) #Overall count for all nucleotides at each sequence
+
+Percent_GC <- round((GC/All)*100,3)
+
+Percent_GC <- paste(Percent_GC, "%")
+```
+Generating data.frame for GC %
+```{r}
+dim(Percent_GC)<- c(1,3)
+colnames(Percent_GC)<- c("HQ433692.1 ","HQ433694.1 ","HQ433691.1")
+
+#Table created, x and y axis are correctly positioned 
+
+Percent_GC <- t(Percent_GC)
+Percent_GC <- data.frame(Percent_GC)
+```
+

@@ -1,0 +1,57 @@
+---
+title: "Download.R"
+author: "Igor Serafini"
+date: "2023-02-15"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Assignment 6
+
+3. 
+```{r}
+ncbi_ids <- c("HQ433692.1","HQ433694.1","HQ433691.1") #Coordinates for rentrez package to fetch from the ncbi database- These are under "associated data" in pubmed, the later command (nuccore) will fetch the nucleotide data. 
+library(rentrez)  # you may need install.packages first
+Bburg<-entrez_fetch(db = "nuccore", id = ncbi_ids, rettype = "fasta") #The entrez_fetch fatches the  DNA sequence in fasta format. The db represents all data source within nuccore (nucleotide database). The id denotes to the coordinates of the nucleotices, while the rettype returns character and vectors in the fasta format. 
+```
+
+3. In North America the Borrelia burgdorferi is the bacterium that is mostly associated with Lyme disease, rarely the Borrelia mayonii also causes Lyme disease 
+
+```{r}
+print(Bburg)
+```
+
+Creating Sequences that contain 3 elements 
+```{r}
+Sequences <- strsplit(Bburg, split = "\n\n", perl = TRUE)
+print(Sequences)
+```
+Making it into DataFrame
+```{r}
+Sequences<- unlist(Sequences)
+```
+
+Using regular expressions to separate the sequences from the headers
+
+```{r}
+header<-gsub("(^>.*sequence)\\n[ATCG].*","\\1",Sequences)
+seq<-gsub("^>.*sequence\\n([ATCG].*)","\\1",Sequences)
+Sequences <- gsub("\n","", Sequences) #Taking out \n from the sequenced data
+Sequences<-data.frame(Name=header,Sequence=seq)
+```
+
+```{r}
+print(Sequences) 
+```
+
+Output data into Sequences.csv 
+```{r}
+write.csv(Sequences, "Sequences.csv")
+```
+
+

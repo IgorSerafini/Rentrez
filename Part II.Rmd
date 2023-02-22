@@ -1,0 +1,101 @@
+---
+title: "Past II"
+author: "Igor Serafini"
+date: "2023-02-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+[my Github](https://github.com/IgorSerafini/Rentrez)
+
+#Part II
+
+
+Uploading Required packages
+```{r}
+library(rentrez)
+library(BiocManager)
+library(rBLAST)
+library(Biostrings)
+```
+
+
+Defining the sequence to search against GenBank (query)
+```{r}
+queryb <- c("GCCTGATGGAGGGGGATAACTACTGGAAACGGTAGCTAATACCGCATGACCTCGCAAGAGCAAAGTGGGGGACCTTAGGGCCTCACGCCATCGGATGAACCCAGATGGGATTAGCTAGTAGGTGGGGTAATGGCTCACCTAGGCGACGATCCCTAGCTGGTCTGAGAGGATGACCAGCCACACTGGAACTGAGACACGGTCCAGACTCCTACGGGAGGCAGCAGTGGGGAATATTGCACAATGGGCGCAA")
+```
+
+Carrying a Blast query
+```{r}
+resultB <- blastSequences(queryb, database = "nt", hitListSize= "10", expect = 1e-06)
+```
+
+
+Finding pairwise score for specificity 
+```{r}
+top_hit_seqB <- resultB[[1]]
+
+# Access the sequences in the unmasked slot
+seqs <- top_hit_seqB@unmasked
+
+# Extract the first two sequences
+seq1 <- seqs[[1]]
+seq2 <- seqs[[2]]
+
+# Perform a pairwise global alignment between the sequences
+alignment <- pairwiseAlignment(seq1, seq2)
+
+alignment
+
+```
+Score of 495.438, a very high degree of specicifity. In order to attain a percetage value we can:
+```{r}
+alignment_percentage = (495.438 / 300) * 100
+
+clipped_percentage <- paste(pmax(0, pmin(alignment_percentage, 100)), "%")
+
+clipped_percentage
+
+#The pairwise alignment indicates that there is 100% alignment between our our unidentified query and BLAST result
+```
+
+In order to find the ID:
+
+Note, I was unable to fetch the ID (After several attempts)
+
+#The following is the best code I was able to develop
+
+Fetch_seq <- entrez_fetch(db = "nuccore", id = top_hit_seqB, rettype = "fasta", retmode = "text", seq_start = 1, seq_stop = 1000)
+
+Converting "target" sequence to Biostring format
+target <- readDNAStringSet(textConnection(Fetch_seq))[[1]]
+
+Thus, 
+
+Following a BLAST search in GENBANK, we come to find that the nearest ID is: MT509623.1
+
+
+
+In this context, here is the code to distinguish between type of organism
+```{r}
+# Search NCBI for the given GenBank ID
+query <- "MT509623.1"
+
+# Retrieving taxonomic information for the organism
+taxon <- Fetch_seq <- entrez_fetch(db = "nuccore", id = query, rettype = "fasta", retmode = "text", seq_start = 1, seq_stop = 1000)
+
+taxon <- unlist(taxon)
+
+
+#Organism is a Yersinia pseudotuberculosis strain. This is a bacteria that causes food-borne gastrointestinal infections in humans and animals. 
+
+```
+
+Report: 
+
+The multiple alignment test from the patients biofluids indicates that the DNA sequenced belongs to a gastroinstinal bacteria called Yersinia pseudotuberculosis. The bacterium can be found in stool and blood, and it most commonly associated with an infection in the colon and small intestine. 
+
+The nanopore sample presented a 250 bp fragment of a Yersinia strain.In this context, the physician should begin tretment to fight off the infection.  
